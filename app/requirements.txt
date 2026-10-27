@@ -1,0 +1,4 @@
+fastapi==0.143.0
+# Fijada aparte: la versión que traía fastapi tenía 2 CVEs HIGH (las detectó Trivy en CI).
+starlette==1.7.0
+uvicorn==0.39.0

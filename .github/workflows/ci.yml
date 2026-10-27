@@ -1,0 +1,42 @@
+# Corre en cada PR hacia main. Es el check obligatorio para poder fusionar.
+# No se autentica en GCP: un PR no necesita (ni debe tener) acceso a la nube.
+name: ci
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # historia completa: gitleaks revisa TODOS los commits, no solo el último
+
+      # Seguridad 1: ningún secreto (llaves, tokens) en ningún commit.
+      - name: Escaneo de secretos (gitleaks)
+        run: docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 git /repo --no-banner --redact
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Tests de la app
+        working-directory: app
+        run: |
+          pip install -r requirements-dev.txt
+          pytest -q
+
+      - name: La imagen construye
+        run: docker build -t tramites-api:ci .
+
+      # Seguridad 2: la imagen no tiene vulnerabilidades HIGH/CRITICAL que ya tengan arreglo.
+      - name: Escaneo de vulnerabilidades (trivy)
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+            ghcr.io/aquasecurity/trivy:0.75.0 image \
+            --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 tramites-api:ci
