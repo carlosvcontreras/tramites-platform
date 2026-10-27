@@ -123,16 +123,15 @@ Los escáneres corren como imágenes de Docker con versión fija y no como Actio
 | 5 | Cloud Run con min 0 y max 3 instancias | GKE | El servicio es stateless y simple. Cloud Run escala a cero (costo casi $0 en dev) y no hay clúster que operar. Max 3 es un tope de gasto. |
 | 6 | Parte B: drift con un `terraform plan` diario con una SA de solo lectura | Binary Authorization | El drift ataca el problema de cambios manuales en consola. BinAuthz queda como siguiente paso. |
 
-## Pendiente / qué se debería hacer después en mi opinión
+## Pendiente y lo que haría después
 
 - Binary Authorization para que solo corran imágenes firmadas por el pipeline.
-- Pinear las GitHub Actions por SHA en lugar de por tag de versión.
 - Un ambiente de staging y promoción de la misma imagen a prod.
 - `terraform plan` en el PR para cambios de infraestructura, y `apply` con una SA separada y aprobación manual.
 - Para producción, `min_instance_count > 0` en horario laboral, uptime check y alertas.
 
 ## Uso de IA
 
-Usé **Claude Code** (Anthropic - Opus 5.5, High effort) para generar el borrador del código, Terraform, workflows y este README. El uso de IA es esencial en el mercado actual para poder desplegar productos internos como dicta el Golden Path (La manera más eficiente y segura de llevar código a producción). 
+Usé **Claude Code** (Anthropic, Opus 5.5) para generar el primer borrador del código, el Terraform, los workflows y este README. La IA es una herramienta para acelerar la productividad pero lo que entrego es mi responsabilidad: ejecuté cada paso en mi proyecto, revisé y entendí cada archivo, corregí lo que falló e hice todas las operaciones de git. Los commits con código generado llevan `Co-Authored-By: Claude`.
 
-Yo ejecuté cada paso en mi proyecto, revisé y entendí cada archivo e hice todas las operaciones de git. Los commits con código generado llevan `Co-Authored-By: Claude`. Las respuestas de `CRITERIO.md` son mías como se estipula en el documento de requerimientos.
+Las respuestas de `CRITERIO.md` son mías como se estipula en el documento de requerimientos.
