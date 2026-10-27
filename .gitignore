@@ -1,0 +1,21 @@
+# Secretos y variables locales
+.env
+*.json
+!package.json
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+.terraform.tfstate.lock.info
+
+# Python
+__pycache__/
+.pytest_cache/
+.venv/
+
+# macOS
+.DS_Store
