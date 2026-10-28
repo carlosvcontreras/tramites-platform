@@ -18,8 +18,10 @@ resource "google_iam_workload_identity_pool_provider" "github" {
     "attribute.repository" = "assertion.repository"
   }
 
-  # Sin esto, cualquier repo de GitHub podría presentar un token a este pool.
-  attribute_condition = "assertion.repository == '${var.github_repo}'"
+  # Candado 1: solo tokens de NUESTRO repo y de la rama main.
+  # Se filtra por claims explícitos (repository, ref) y no por el formato de "sub",
+  # que GitHub puede cambiar (por ejemplo, el subject inmutable con IDs numéricos).
+  attribute_condition = "assertion.repository == '${var.github_repo}' && assertion.ref == 'refs/heads/main'"
 
   oidc {
     issuer_uri = "https://token.actions.githubusercontent.com"
@@ -27,19 +29,18 @@ resource "google_iam_workload_identity_pool_provider" "github" {
 }
 
 locals {
-  # Solo los workflows que corren en la rama main de NUESTRO repo.
-  # Un PR o una rama cualquiera no puede usar estas SAs.
-  github_main = "principal://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/subject/repo:${var.github_repo}:ref:refs/heads/main"
+  # Candado 2: las SAs solo aceptan identidades de nuestro repo 
+  github_repo_principals = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/attribute.repository/${var.github_repo}"
 }
 
 resource "google_service_account_iam_member" "deployer_wif" {
   service_account_id = google_service_account.ci_deployer.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = local.github_main
+  member             = local.github_repo_principals
 }
 
 resource "google_service_account_iam_member" "drift_wif" {
   service_account_id = google_service_account.ci_drift.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = local.github_main
+  member             = local.github_repo_principals
 }
