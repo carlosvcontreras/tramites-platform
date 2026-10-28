@@ -7,6 +7,8 @@ locals {
     "iamcredentials.googleapis.com", # WIF: canjear el token de GitHub por uno de la SA
     "sts.googleapis.com",            # WIF: Security Token Service
     "billingbudgets.googleapis.com",
+    "cloudbilling.googleapis.com", # permisos IAM sobre la cuenta de facturación (ci-drift)
+    "cloudresourcemanager.googleapis.com",
     "cloudresourcemanager.googleapis.com",
   ]
 }
