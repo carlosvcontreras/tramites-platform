@@ -1,0 +1,6 @@
+# Copiar a terraform.tfvars (está en .gitignore) y llenar.
+project_id      = "<PROJECT_ID>"
+region          = "us-central1"
+billing_account = "<BILLING_ACCOUNT_ID>"
+github_repo     = "<GITHUB_USER>/tramites-platform"
+state_bucket    = "<PROJECT_ID>-tfstate"

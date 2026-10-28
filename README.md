@@ -122,6 +122,7 @@ Los escáneres corren como imágenes de Docker con versión fija y no como Actio
 | 4 | Tag = SHA del commit, con tags inmutables | `:latest` o tags que se pueden sobrescribir | Con el SHA sabes exactamente qué código corre en cada revisión y el rollback es exacto. |
 | 5 | Cloud Run con min 0 y max 3 instancias | GKE | El servicio es stateless y simple. Cloud Run escala a cero (costo casi $0 en dev) y no hay clúster que operar. Max 3 es un tope de gasto. |
 | 6 | Parte B: drift con un `terraform plan` diario con una SA de solo lectura | Binary Authorization | El drift ataca el problema de cambios manuales en consola. BinAuthz queda como siguiente paso. |
+| 7 | Cloud Run usa una versión **fija** del secreto (`"1"`) | La versión `latest` | Con `latest`, cada instancia lee el secreto al arrancar. Si alguien agrega una versión nueva, las instancias que arrancan después usan la llave nueva y las que ya estaban siguen con la vieja, así que conviven dos llaves. Y si la versión nueva está mal, llega a producción sin PR ni deploy. Con una versión fija, cambiar la llave requiere un PR, cada revisión de Cloud Run usa una llave conocida y el drift avisa si alguien cambia la versión desde la consola. |
 
 ## Pendiente y lo que haría después
 
