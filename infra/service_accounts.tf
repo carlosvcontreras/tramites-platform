@@ -59,6 +59,14 @@ resource "google_storage_bucket_iam_member" "drift_state_read" {
   member = "serviceAccount:${google_service_account.ci_drift.email}"
 }
 
+# Leer políticas IAM (solo lectura). roles/viewer no incluye storage.buckets.getIamPolicy,
+# y el plan necesita leer los permisos del bucket del estado para compararlos.
+resource "google_project_iam_member" "drift_iam_read" {
+  project = var.project_id
+  role    = "roles/iam.securityReviewer"
+  member  = "serviceAccount:${google_service_account.ci_drift.email}"
+}
+
 # Leer el budget (vive en la cuenta de facturación, no en el proyecto).
 resource "google_billing_account_iam_member" "drift_billing_read" {
   billing_account_id = var.billing_account
