@@ -1,0 +1,55 @@
+# Corre cuando algo entra a main (solo por PR fusionado, main está protegida).
+# Construye la imagen, la publica con el SHA del commit y la despliega en Cloud Run.
+name: deploy
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write # permite pedir el token OIDC para WIF
+
+env:
+  REGION: ${{ vars.REGION }}
+  SERVICE: tramites-api
+  IMAGE: ${{ vars.REGION }}-docker.pkg.dev/${{ vars.PROJECT_ID }}/tramites/tramites-api
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Sin llaves: GitHub da un token de corta vida y GCP lo cambia por la SA ci-deployer.
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.DEPLOYER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+
+      - name: Build y push (tag = SHA corto, nunca latest)
+        run: |
+          TAG="${GITHUB_SHA::7}"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
+          # Los tags son inmutables: si se re-ejecuta el workflow, la imagen ya existe y no se vuelve a subir.
+          if gcloud artifacts docker images describe "$IMAGE:$TAG" >/dev/null 2>&1; then
+            echo "La imagen $IMAGE:$TAG ya existe, se reutiliza."
+          else
+            docker build -t "$IMAGE:$TAG" .
+            docker push "$IMAGE:$TAG"
+          fi
+
+      - name: Deploy a Cloud Run
+        run: |
+          gcloud run deploy "$SERVICE" \
+            --image "$IMAGE:$TAG" \
+            --region "$REGION" \
+            --quiet
+
+      - name: Smoke test
+        run: |
+          URL=$(gcloud run services describe "$SERVICE" --region "$REGION" --format='value(status.url)')
+          curl -fsS "$URL/health"
