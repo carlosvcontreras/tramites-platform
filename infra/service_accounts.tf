@@ -64,4 +64,6 @@ resource "google_billing_account_iam_member" "drift_billing_read" {
   billing_account_id = var.billing_account
   role               = "roles/billing.viewer"
   member             = "serviceAccount:${google_service_account.ci_drift.email}"
+
+  depends_on = [google_project_service.apis]
 }
