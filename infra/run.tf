@@ -1,3 +1,8 @@
+locals {
+  # Tope de gasto: máximo de instancias, igual para el servicio y para cada revisión.
+  max_instances = 3
+}
+
 resource "google_cloud_run_v2_service" "api" {
   name     = "tramites-api"
   location = var.region
@@ -6,13 +11,19 @@ resource "google_cloud_run_v2_service" "api" {
   # Si es true, terraform destroy no puede borrar el servicio.
   deletion_protection = false
 
+  # Tope del servicio completo (todas las revisiones). La consola de Cloud Run
+  # edita este valor, por eso se declara: así el drift lo vigila.
+  scaling {
+    max_instance_count = local.max_instances
+  }
+
   template {
     service_account = google_service_account.runtime.email
 
-    # Costo: escala a 0 sin tráfico; máximo 3 instancias como tope de gasto.
+    # Tope por revisión. Escala a 0 sin tráfico (costo casi cero en dev).
     scaling {
       min_instance_count = 0
-      max_instance_count = 3
+      max_instance_count = local.max_instances
     }
 
     containers {
