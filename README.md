@@ -3,8 +3,8 @@
 Plataforma mínima para desplegar `tramites-api`, el servicio de consulta de estado de trámite del Ministerio de Trámites Ciudadanos (ficticio), en Cloud Run.
 
 - **Parte B elegida:** Opción 2, detección de drift.
-- **Proyecto GCP:** `<PROJECT_ID>`
-- **URL:** `<SERVICE_URL>`
+- **Proyecto GCP:** `tramites-cv-2910`
+- **URL:** https://tramites-api-1061644496104.us-central1.run.app (prueba: `/health` y `/tramites/1001`)
 
 ## Diagrama
 
@@ -111,6 +111,17 @@ gcloud storage rm -r gs://$PROJECT_ID-tfstate
 Trivy encontró dos CVE HIGH en `starlette` (la versión que traía FastAPI). Lo corregí fijando `starlette==1.7.0` en `requirements.txt`.
 
 Los escáneres corren como imágenes de Docker con versión fija y no como Actions de terceros. Así un tag de una Action modificado por su autor no cambia lo que corre en el pipeline.
+
+## Problemas que encontré
+
+Cada uno se corrigió con su propio PR `fix:`.
+
+| PR | Problema | Corrección |
+|---|---|---|
+| #4 | `ci-drift` no podía leer el budget | Habilitar la API `cloudbilling`. El budget vive en la cuenta de facturación, no en el proyecto. |
+| #6 | El primer deploy falló con `getAccessToken denied` | WIF filtraba por el formato exacto del `sub` del token de GitHub, y no coincidió. Ahora filtra por los claims `repository` y `ref` (`main`). Apliqué el fix y volví a correr el mismo deploy. |
+| #8 | El plan de drift fallaba al leer políticas IAM | Rol `iam.securityReviewer` para `ci-drift`. Sigue siendo solo lectura. |
+| #9 | Cambiar el máximo de instancias en la consola no aparecía como drift | El máximo se declara también a nivel servicio, que es donde lo cambia la consola. |
 
 ## Decisiones
 
